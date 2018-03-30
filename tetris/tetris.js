@@ -160,8 +160,11 @@ function start(ev) {
 		// Draw grid
 		grid.forEach((column, colIdx) => {
 			column.forEach((box, rowIdx) => {
-				ctx.fillStyle = currentShape.color(grid[colIdx][rowIdx]) ;
-				ctx.fillRect(colIdx * boxSize, rowIdx * boxSize, boxSize, boxSize) ;
+				let colorIdx = grid[colIdx][rowIdx] ;
+				if ( colorIdx !== 0 ) {
+					ctx.fillStyle = currentShape.color(colorIdx) ;
+					ctx.fillRect(colIdx * boxSize, rowIdx * boxSize, boxSize, boxSize) ;
+				}
 			}) ;
 		}) ;
 		// Loop
@@ -210,7 +213,7 @@ Shape.prototype.canMove = function(x, y, grid) {
 Shape.prototype.imprint = function(grid) {
 	this.forEach((colIdx, rowIdx, box) => {
 		if ( box ) {
-			grid[this.x + colIdx][this.y + rowIdx] = this.index + 1 ;
+			grid[this.x + colIdx][this.y + rowIdx] = this.index ;
 		}
 	}) ;
 }
@@ -235,7 +238,7 @@ Shape.prototype.rotate = function(grid, counterClockwise) {
 		this.h = newShape.h ;
 	}
 }
-Shape.prototype.colors = ['#FFFFFF', '#000000', '#AA0000', '#00AA00', '#0000AA', '#AAAA00', '#AA00AA', '#00AAAA'] ;
+Shape.prototype.colors = ['#000000', '#AA0000', '#00AA00', '#0000AA', '#AAAA00', '#AA00AA', '#00AAAA'] ;
 Shape.prototype.color = function(idx) {
 	if ( (  idx < 0 ) || ( idx >= this.colors.length ) ) idx = 0 ;
 	return this.colors[idx] ;
@@ -264,7 +267,7 @@ Shape.prototype.draw = function(ctx, boxSize) {
 	// Shape
 	this.forEach((colIdx, rowIdx, box) => {
 		if ( box ) {
-			ctx.fillStyle = this.color(this.index + 1) ;
+			ctx.fillStyle = this.color(this.index) ;
 			ctx.fillRect(
 				( this.x + colIdx ) * boxSize,
 				( this.y + rowIdx ) * boxSize,
