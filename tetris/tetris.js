@@ -104,14 +104,6 @@ function start(ev) {
 	} ;
 	window.addEventListener('keydown', keyChange, false) ;
 	window.addEventListener('keyup', keyChange, false) ;
-	// Keyboard loop
-	/*
-	setInterval(() => {
-		if ( ( offsetX !== 0 ) || ( offsetY !== 0 ) ) {
-			currentShape.move(offsetX, offsetY, grid) ;
-		}
-	}, kbdInterval) ;
-	*/
 	// Down loop
 	const loop = function downLoop() {
 		if ( ! currentShape.move(0, 1, grid) ) {
