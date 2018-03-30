@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8" />
+  <title>Tetris</title>
+  <script type="text/javascript" src="tetris.js"></script>
+  <link type="text/css" rel="stylesheet" href="tetris.css">
+ </head>
+
+ <body onload="start(event)">
+  <canvas id="tetris"></canvas>
+  <div id="info">
+   <div>Difficulty <input id="difficultyInput" type="range" value="1" min="0" max="100"></div>
+   <div>Speed <input id="speedInput" type="text" size="4" disabled></div>
+   <div>Score <input id="scoreInput" type="text" size="4" disabled></div>
+  </div>
+ </body>
+</html>
