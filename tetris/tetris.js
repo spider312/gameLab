@@ -7,7 +7,7 @@ function start(ev) {
 	const ctx = canvas.getContext('2d') ;
 	// Game config
 	const gridW = 10, gridH = 20 ;
-	const kbdInterval = 1000 ; // Interval between keyboard state interpreted
+	const kbdInterval = 100 ; // Interval between keyboard state interpreted
 	const initialLoopInterval = 1000 ; // Initial delay between auto-down
 	// Adapt viewport size
 	const boxSize = Math.min(
@@ -69,12 +69,16 @@ function start(ev) {
 	let leftPressed = rightPressed = downPressed = null ;
 	let offsetX = offsetY = 0 ;
 	const press = (pressed, key, offsetX, offsetY) => {
-		if ( pressed ) {
-			currentShape.move(offsetX, offsetY, grid) ;
-			return setInterval(() => {
+		if ( pressed ) { // Start or confirm movment
+			if ( key === null ) { // Movment not already started : start
 				currentShape.move(offsetX, offsetY, grid) ;
-			}, kbdInterval) ;
-		} else {
+				return setInterval(() => {
+					currentShape.move(offsetX, offsetY, grid) ;
+				}, kbdInterval) ;
+			} else { // Just confirm
+				return key ;
+			}
+		} else { // Stop movment
 			clearInterval(key) ;
 			return null ;
 		}
