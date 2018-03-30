@@ -155,6 +155,8 @@ function start(ev) {
 	let draw = () => {
 		// Clear
 		ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight) ;
+		// Draw shape (before grid because of column indicator)
+		currentShape.draw(ctx, boxSize) ;
 		// Draw grid
 		grid.forEach((column, colIdx) => {
 			column.forEach((box, rowIdx) => {
@@ -162,8 +164,6 @@ function start(ev) {
 				ctx.fillRect(colIdx * boxSize, rowIdx * boxSize, boxSize, boxSize) ;
 			}) ;
 		}) ;
-		// Draw shape
-		currentShape.draw(ctx, boxSize) ;
 		// Loop
 		requestAnimationFrame(draw) ;
 	}
@@ -255,6 +255,13 @@ Shape.prototype.forEach = function(callback) { // callback will recieve colIdx, 
 	return result ;
 }
 Shape.prototype.draw = function(ctx, boxSize) {
+	// Column indicator
+	ctx.fillStyle = '#F2F2F2' ;
+	ctx.fillRect(
+		( this.x ) * boxSize, 0,
+		this.w * boxSize, this.gridH * boxSize
+	) ;
+	// Shape
 	this.forEach((colIdx, rowIdx, box) => {
 		if ( box ) {
 			ctx.fillStyle = this.color(this.index + 1) ;
