@@ -134,6 +134,7 @@ function start(ev) {
 			}) ;
 			// New block shouldn't move, game lost
 			if ( ! currentShape.canMove(currentShape.x, currentShape.y, grid) ) {
+				draw() ; // "confirm" will prevent display, force it
 				if ( confirm("You've lost, start a new game ?") ) {
 					leftPressed = rightPressed = downPressed = upPressed = false ; // Confirm may interfere with kbd state detection
 					newGame() ;
@@ -154,7 +155,7 @@ function start(ev) {
 			column.forEach((box, rowIdx) => {
 				let colorIdx = grid[colIdx][rowIdx] ;
 				if ( colorIdx !== 0 ) {
-					ctx.fillStyle = currentShape.color(colorIdx) ;
+					ctx.fillStyle = currentShape.color(colorIdx-1) ;
 					ctx.fillRect(colIdx * boxSize, rowIdx * boxSize, boxSize, boxSize) ;
 				}
 			}) ;
@@ -205,7 +206,7 @@ Shape.prototype.canMove = function(x, y, grid) {
 Shape.prototype.imprint = function(grid) {
 	this.forEach((colIdx, rowIdx, box) => {
 		if ( box ) {
-			grid[this.x + colIdx][this.y + rowIdx] = this.index ;
+			grid[this.x + colIdx][this.y + rowIdx] = this.index + 1 ;
 		}
 	}) ;
 }
