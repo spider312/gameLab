@@ -1,14 +1,17 @@
 function start(ev) {
+	const tickDuration = 10 ;
 	// Viewport
 	const viewportSize = 500 ;
 	const canvas = document.getElementById('shoot') ;
+	canvas.tabIndex = 0;
+	canvas.focus();
 	canvas.width = viewportSize ;
 	canvas.height = viewportSize ;
 	const ctx = canvas.getContext('2d') ;
 	// Ship
 	let ship = new Ship(viewportSize) ;
 	// Bad guys
-	let badGuys = new BadGuys() ;
+	let badGuys = new BadGuys(viewportSize) ;
 	// Events
 	let keyChange = (ev) => {
 		let down = ( ev.type === 'keydown' ) ;
@@ -27,18 +30,20 @@ function start(ev) {
 	window.addEventListener('keydown', keyChange, false) ;
 	window.addEventListener('keyup', keyChange, false) ;
 	// Main loop
-	window.focus() ;
-	let loop = () => {
+	const loop = () => {
 		ship.update() ;
 		badGuys.update() ;
 		ship.collision(badGuys) ;
-		// Draw
+	}
+	setInterval(loop, tickDuration) ;
+	// Draw loop
+	const draw = () => {
 		ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight) ;
 		ship.draw(ctx) ;
 		badGuys.draw(ctx) ;
-		requestAnimationFrame(loop) ;
+		requestAnimationFrame(draw) ;
 	}
-	loop() ;
+	draw() ;
 }
 
 // Ship
@@ -51,7 +56,7 @@ function Ship(viewportSize) {
 	this.speed = 10 ;
 	this.goLeft = this.goRight = this.firing = false ;
 	this.fireDelay = this.fireCounter = 10 ;
-	this.fireMode = 2 ;
+	this.fireMode = 0 ;
 	this.bullets = [] ;
 }
 Ship.prototype.update = function updateShip() {
@@ -122,30 +127,55 @@ Bullet.prototype.draw = function drawBullet(ctx) {
 	ctx.stroke();
 }
 // Bad guys container
-function BadGuys() {
-	this.change() ; // Init bad guys speed
+function BadGuys(viewportSize) {
+	this.viewportSize = viewportSize ;
 	// Content
 	this.content = [] ;
-	for ( let i = 0 ; i < 10 ; i++ ) {
-		this.content.push(new BadGuy(20*(i+1)*2,20)) ;
-	}
+	this.populate(10) ;
+	// Init
+	this.change() ; 
 }
 BadGuys.prototype.change = function changeBadGuys() {
-	this.speedX = Math.floor(Math.random(3))-1 ;
-	this.speedY = Math.floor(Math.random(3))-1 ;
-	this.nextChange = Math.floor(Math.random(10))+1 ;
+	this.speedX = Math.floor(Math.random()*3)-1 ;
+	this.speedY = Math.floor(Math.random()*3)-1 ;
+	this.nextChange = Math.floor(Math.random()*1000)+1 ;
 }
 BadGuys.prototype.update = function updateBadGuys() {
 	this.content.forEach((badGuy) => { badGuy.update(this.speedX, this.speedY) }) ;
+	// Trigger change if a badGuy goes near a border
+	const leftBG = this.content[0] ;
+	const rightBG = this.content[this.content.length - 1] ;
+	const margin = 5 ;
+	if (
+		( leftBG.left < margin )
+		||
+		( leftBG.top < margin )
+		||
+		( rightBG.right > this.viewportSize - margin )
+		||
+		( rightBG.bottom > this.viewportSize - margin - 100 )
+	) {
+		return this.change() ;
+	}
+	// Trigger change after delay
 	this.nextChange-- ;
-	if ( this.nextChange === 0 ) {
+	if ( this.nextChange <= 0 ) {
 		this.change() ;
+	}
+}
+BadGuys.prototype.populate = function populateBadGuys(nb) {
+	for ( let i = 0 ; i < nb ; i++ ) {
+		this.content.push(new BadGuy(20*(i+1)*2,20)) ;
 	}
 }
 BadGuys.prototype.collision = function collisionBadGuys(bullet) {
 	this.content.forEach((badGuy, idx) => {
 		if ( badGuy.collision(bullet) ) {
 			this.content.splice(idx, 1) ;
+			console.log(this.content.length+' bad guys left') ;
+			if ( this.content.length === 0 ) {
+				this.populate(10) ;
+			}
 		}
 	}) ;
 }
