@@ -9,28 +9,20 @@ function start(ev) {
 	canvas.height = viewportSize ;
 	const ctx = canvas.getContext('2d') ;
 	// Ship
-	let ship = new Ship(viewportSize) ;
+	const ship = new Ship(viewportSize) ;
 	// Bad guys
-	let badGuys = new BadGuys(viewportSize) ;
+	const badGuys = new BadGuys(viewportSize) ;
 	// Events
-	let keyChange = (ev) => {
-		let down = ( ev.type === 'keydown' ) ;
-		switch ( ev.keyCode ) {
-			case 32 : // [ ]
-				ship.firing = down ;
-				break ;
-			case 37 : // <-
-				ship.goLeft = down ;
-				break ;
-			case 39 : // ->
-				ship.goRight = down ;
-				break ;
-		}
-	}
+		// Keyboard
+	const keyStatus = new Array(256).fill(false) ;
+	const keyChange = (ev) => keyStatus[ev.keyCode] = ( ev.type === 'keydown' ) ;
 	window.addEventListener('keydown', keyChange, false) ;
 	window.addEventListener('keyup', keyChange, false) ;
 	// Main loop
 	const loop = () => {
+		ship.firing = keyStatus[32] // [ ]
+		ship.goLeft = keyStatus[37] // <-
+		ship.goRight = keyStatus[39] // ->
 		ship.update() ;
 		badGuys.update() ;
 		ship.collision(badGuys) ;
