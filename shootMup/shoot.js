@@ -18,11 +18,39 @@ function start(ev) {
 	const keyChange = (ev) => keyStatus[ev.keyCode] = ( ev.type === 'keydown' ) ;
 	window.addEventListener('keydown', keyChange, false) ;
 	window.addEventListener('keyup', keyChange, false) ;
+		// Gamepad
+	let gamepads = [] ;
+	window.addEventListener("gamepadconnected", function(ev) {
+		gamepads = window.navigator.getGamepads()
+		//console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.", ev.gamepad.index, ev.gamepad.id, ev.gamepad.buttons.length, ev.gamepad.axes.length);
+	});
+	window.addEventListener("gamepaddisconnected", function(ev) {
+		gamepads = window.navigator.getGamepads()
+		//console.log("Gamepad disconnected from index %d: %s", ev.gamepad.index, ev.gamepad.id);
+	});
 	// Main loop
+	//const prevState = new Array(256).fill(false) ;
 	const loop = () => {
-		ship.firing = keyStatus[32] // [ ]
 		ship.goLeft = keyStatus[37] // <-
 		ship.goRight = keyStatus[39] // ->
+		ship.firing = keyStatus[32] // [ ]
+		gamepads.forEach((gp) => {
+			ship.goLeft = ship.goLeft || gp.buttons[7].pressed ;
+			ship.goRight = ship.goRight || gp.buttons[5].pressed ;
+			ship.firing = ship.firing || gp.buttons[14].pressed ;
+		}) ;
+		/*
+		if ( gamepads.length > 0 ) {
+			// Debug button pression
+			let gp = gamepads[0] ;
+			gp.buttons.forEach((button, idx) => {
+				if ( button.pressed !== prevState[idx] ) {
+					prevState[idx] = button.pressed ;
+					console.log('button : '+idx+' : '+button.pressed) ;
+				}
+			}) ;
+		}
+		*/
 		ship.update() ;
 		badGuys.update() ;
 		ship.collision(badGuys) ;
