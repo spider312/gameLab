@@ -29,7 +29,7 @@ function start(ev) {
 			console.log('First gamepad is for first ship') ;
 		} else { // Other gamepads create their own ship
 			let ship = new Ship(viewportSize, ships.length) ;
-			ship.gamepad = ev.gamepad
+			ship.gamepad = ev.gamepad ;
 			ships.push(ship) ;
 		}
 	}) ;
@@ -75,7 +75,7 @@ function start(ev) {
 		}) ;
 		badGuys.update() ;
 		ships.forEach((ship) => ship.collision(badGuys)) ;
-	}
+	} ;
 	setInterval(loop, tickDuration) ;
 	// Draw loop
 	const draw = () => {
@@ -83,7 +83,7 @@ function start(ev) {
 		ships.forEach((ship) => ship.draw(ctx)) ;
 		badGuys.draw(ctx) ;
 		requestAnimationFrame(draw) ;
-	}
+	} ;
 	draw() ;
 }
 
@@ -106,7 +106,7 @@ function Ship(viewportSize, idx) {
 }
 Ship.prototype.setY = function setYship(y) { // Reorder ships when a controller is disconnected
 	this.y = this.viewportSize - 20 - y * this.h * 2;
-}
+} ;
 Ship.prototype.update = function updateShip() {
 	// Movement
 	this.x = this.x + this.direction * this.speed ; // Move
@@ -123,7 +123,7 @@ Ship.prototype.update = function updateShip() {
 	this.bullets.forEach(function(bullet) {
 		bullet.update() ;
 	});
-}
+} ;
 Ship.prototype.fire = function fireShip() {
 	switch ( this.fireMode ) {
 		case 1 :
@@ -138,18 +138,18 @@ Ship.prototype.fire = function fireShip() {
 		default : 
 			this.bullets.push(new Bullet(this.x, this.y)) ;
 	}
-}
+} ;
 Ship.prototype.collision = function collisionShip(badGuys) {
 	this.bullets.forEach(function(bullet) {
 		badGuys.collision(bullet) ;
 	});
-}
+} ;
 Ship.prototype.draw = function drawShip(ctx) {
 	ctx.fillRect(this.x-this.w/2, this.y-this.h/2, this.w, this.h) ;
 	this.bullets.forEach(function(bullet) {
 		bullet.draw(ctx) ;
 	});
-}
+} ;
 // Bullets
 function Bullet(x, y, speedX, speedY) {
 	this.x = x ;
@@ -161,13 +161,13 @@ function Bullet(x, y, speedX, speedY) {
 Bullet.prototype.update = function updateBullet() {
 	this.x -= this.speedX ;
 	this.y -= this.speedY ;
-}
+} ;
 Bullet.prototype.draw = function drawBullet(ctx) {
 	ctx.fillRect(this.x, this.y, 1, 1) ;
 	ctx.beginPath() ;
 	ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2) ;
 	ctx.stroke();
-}
+} ;
 // Bad guys container
 function BadGuys(viewportSize) {
 	this.viewportSize = viewportSize ;
@@ -179,7 +179,7 @@ function BadGuys(viewportSize) {
 		() => { this.speedX =  1 ; this.speedY =  0 ;},
 		() => { this.speedX =  0 ; this.speedY =  1 ;},
 		() => { this.speedX = -1 ; this.speedY =  0 ;},
-		() => { this.speedX =  0 ; this.speedY = -1 ;},
+		() => { this.speedX =  0 ; this.speedY = -1 ;}
 	] ;
 	this.change() ;
 }
@@ -189,9 +189,9 @@ BadGuys.prototype.change = function changeBadGuys() {
 	let nextChoice = this.choices.splice(i, 1)[0] ;
 	nextChoice() ;
 	this.choices.push(nextChoice) ;
-}
+} ;
 BadGuys.prototype.update = function updateBadGuys() {
-	this.content.forEach((badGuy) => { badGuy.update(this.speedX, this.speedY) }) ;
+	this.content.forEach((badGuy) => { badGuy.update(this.speedX, this.speedY) ; }) ;
 	// Trigger change if a badGuy goes near a border
 	const leftBG = this.content[0] ;
 	const rightBG = this.content[this.content.length - 1] ;
@@ -211,12 +211,12 @@ BadGuys.prototype.update = function updateBadGuys() {
 	if ( this.nextChange <= 0 ) {
 		this.change() ;
 	}
-}
+} ;
 BadGuys.prototype.populate = function populateBadGuys(nb) {
 	for ( let i = 0 ; i < nb ; i++ ) {
 		this.content.push(new BadGuy(20*(i+1)*2,30)) ;
 	}
-}
+} ;
 BadGuys.prototype.collision = function collisionBadGuys(bullet) {
 	this.content.forEach((badGuy, idx) => {
 		if ( badGuy.collision(bullet) ) {
@@ -227,10 +227,10 @@ BadGuys.prototype.collision = function collisionBadGuys(bullet) {
 			}
 		}
 	}) ;
-}
+} ;
 BadGuys.prototype.draw = function drawBadGuys(ctx) {
-	this.content.forEach((badGuy) => { badGuy.draw(ctx) }) ;
-}
+	this.content.forEach((badGuy) => badGuy.draw(ctx)) ;
+} ;
 // Bad guys
 function BadGuy(x, y, w, h) {
 	this.x = x ;
@@ -239,21 +239,21 @@ function BadGuy(x, y, w, h) {
 	this.h = h || 20 ;
 	this.updateCoords() ;
 }
-BadGuy.prototype.tl = function() { return { "x": this.left,  "y": this.top } } ;
-BadGuy.prototype.tr = function() { return { "x": this.right, "y": this.top } } ;
-BadGuy.prototype.bl = function() { return { "x": this.left,  "y": this.bottom } } ;
-BadGuy.prototype.br = function() { return { "x": this.right, "y": this.bottom } } ;
+BadGuy.prototype.tl = function() { return { "x": this.left,  "y": this.top } ; } ;
+BadGuy.prototype.tr = function() { return { "x": this.right, "y": this.top } ; } ;
+BadGuy.prototype.bl = function() { return { "x": this.left,  "y": this.bottom } ; } ;
+BadGuy.prototype.br = function() { return { "x": this.right, "y": this.bottom } ; } ;
 BadGuy.prototype.updateCoords = function updateCoordsBadGuy(speedX, speedY) {
 	this.left = this.x-this.w/2 ;
 	this.right = this.x+this.w/2 ;
 	this.top = this.y-this.h/2 ;
 	this.bottom = this.y+this.h/2 ;
-}
+} ;
 BadGuy.prototype.update = function updateBadGuy(speedX, speedY) {
 	this.x += speedX ;
 	this.y += speedY ;
 	this.updateCoords() ;
-}
+} ;
 BadGuy.prototype.collision = function collisionBadGuy(bullet) {
 	let tl = this.tl(),
 	    tr = this.tr(),
@@ -274,10 +274,10 @@ BadGuy.prototype.collision = function collisionBadGuy(bullet) {
 		return true ;
 	}
 	return false ;
-}
+} ;
 BadGuy.prototype.draw = function drawBadGuy(ctx) {
 	ctx.fillRect(this.x-this.w/2, this.y-this.h/2, this.w, this.h) ;
-}
+} ;
 // Lib
 function magnitudeSquare(a, b) { // Returns the square of a distance in order to avoid sqrt in comparisons
 	let dx = a.x - b.x ;
