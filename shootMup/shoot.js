@@ -9,7 +9,7 @@ function start(ev) {
 	canvas.height = viewportSize ;
 	const ctx = canvas.getContext('2d') ;
 	// Ship
-	const ship = new Ship(viewportSize) ;
+	const ships = [new Ship(viewportSize)] ;
 	// Bad guys
 	const badGuys = new BadGuys(viewportSize) ;
 	// Events
@@ -19,47 +19,68 @@ function start(ev) {
 	window.addEventListener('keydown', keyChange, false) ;
 	window.addEventListener('keyup', keyChange, false) ;
 		// Gamepad
-	let gamepads = [] ;
-	window.addEventListener("gamepadconnected", function(ev) {
-		gamepads = window.navigator.getGamepads()
-		//console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.", ev.gamepad.index, ev.gamepad.id, ev.gamepad.buttons.length, ev.gamepad.axes.length);
-	});
-	window.addEventListener("gamepaddisconnected", function(ev) {
-		gamepads = window.navigator.getGamepads()
-		//console.log("Gamepad disconnected from index %d: %s", ev.gamepad.index, ev.gamepad.id);
+	window.addEventListener("gamepadconnected", (ev) => {
+		if ( ev.gamepad.buttons.length < 15 ) {
+			console.log('Connected gamepad has not enough buttons') ;
+			return;
+		}
+		if ( ships[0].gamepad === null ) { // First detected gamepad is for first ship
+			ships[0].gamepad = ev.gamepad ;
+			console.log('First gamepad is for first ship') ;
+		} else { // Other gamepads create their own ship
+			let ship = new Ship(viewportSize, ships.length) ;
+			ship.gamepad = ev.gamepad
+			ships.push(ship) ;
+		}
+	}) ;
+	window.addEventListener("gamepaddisconnected", (ev) => {
+		let managed = false ;
+		ships.forEach((ship, idx) => {
+			if ( ship.gamepad === ev.gamepad ) {
+				managed = true ;
+				if ( idx === 0 ) {
+					ship.gamepad = null ;
+					console.log('First ship has no gamepad anymore') ;
+				} else {
+					console.log('Destroying ship '+idx+' because it has no gamepad anymore') ;
+					ships.splice(idx, 1) ;
+					ships.forEach((ship, idx) => ship.setY(idx)) ;
+				}
+			}
+		}) ;
+		if ( ! managed ) {
+			console.log("Disconnected gamepad wasn't linked to any ship") ;
+		}
 	});
 	// Main loop
-	//const prevState = new Array(256).fill(false) ;
+	const prevState = new Array(256).fill(0) ;
 	const loop = () => {
-		ship.goLeft = keyStatus[37] // <-
-		ship.goRight = keyStatus[39] // ->
-		ship.firing = keyStatus[32] // [ ]
-		gamepads.forEach((gp) => {
-			ship.goLeft = ship.goLeft || gp.buttons[7].pressed ;
-			ship.goRight = ship.goRight || gp.buttons[5].pressed ;
-			ship.firing = ship.firing || gp.buttons[14].pressed ;
-		}) ;
-		/*
-		if ( gamepads.length > 0 ) {
-			// Debug button pression
-			let gp = gamepads[0] ;
-			gp.buttons.forEach((button, idx) => {
-				if ( button.pressed !== prevState[idx] ) {
-					prevState[idx] = button.pressed ;
-					console.log('button : '+idx+' : '+button.pressed) ;
+		ships.forEach((ship, idx) => {
+			// Keyboard controls first ship
+			if ( idx === 0 ) {
+				ship.direction = keyStatus[37] * -1 + keyStatus[39] * 1 ;
+				ship.firing = keyStatus[32] ;
+			}
+			// Ship is controlled by a gamepad
+			if ( ship.gamepad !== null ) {
+				if ( ship.gamepad.buttons[7].pressed || ship.gamepad.buttons[5].pressed ) {
+					ship.direction = ship.gamepad.buttons[7].pressed * -1 + ship.gamepad.buttons[5].pressed * 1 ;
+				} else if ( ship.gamepad.axes[0] !== 0 ) {
+					ship.direction = ship.gamepad.axes[0] ;
 				}
-			}) ;
-		}
-		*/
-		ship.update() ;
+				ship.firing = ship.firing || ship.gamepad.buttons[14].pressed ;
+			}
+			// Update ship
+			ship.update() ;
+		}) ;
 		badGuys.update() ;
-		ship.collision(badGuys) ;
+		ships.forEach((ship) => ship.collision(badGuys)) ;
 	}
 	setInterval(loop, tickDuration) ;
 	// Draw loop
 	const draw = () => {
 		ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight) ;
-		ship.draw(ctx) ;
+		ships.forEach((ship) => ship.draw(ctx)) ;
 		badGuys.draw(ctx) ;
 		requestAnimationFrame(draw) ;
 	}
@@ -67,28 +88,29 @@ function start(ev) {
 }
 
 // Ship
-function Ship(viewportSize) {
+function Ship(viewportSize, idx) {
+	idx = ( typeof idx === 'number' ) ? idx : 0 ;
+	console.log('Here comes a new challenger !', idx) ;
 	this.viewportSize = viewportSize;
-	this.w = 100 ;
+	this.w = 50 ;
 	this.h = 10 ;
 	this.x = viewportSize / 2 ;
-	this.y = viewportSize - 20 ;
+	this.setY(idx) ;
 	this.speed = 10 ;
-	this.goLeft = this.goRight = this.firing = false ;
+	this.direction = 0 ;
+	this.firing = false ;
 	this.fireDelay = this.fireCounter = 10 ;
 	this.fireMode = 0 ;
 	this.bullets = [] ;
+	this.gamepad = null ;
+}
+Ship.prototype.setY = function setYship(y) { // Reorder ships when a controller is disconnected
+	this.y = this.viewportSize - 20 - y * this.h * 2;
 }
 Ship.prototype.update = function updateShip() {
 	// Movement
-	if ( this.goLeft ) {
-		this.x -= this.speed ;
-		this.x = Math.max(this.x, this.w/2+1) ;
-	}
-	if ( this.goRight ) {
-		this.x += this.speed ;
-		this.x = Math.min(this.x, this.viewportSize-1-this.w/2) ;
-	}
+	this.x = this.x + this.direction * this.speed ; // Move
+	this.x = Math.min(Math.max(this.x, this.w/2+1), this.viewportSize-1-this.w/2) ; // Cap
 	// Fire
 	if ( this.firing ) {
 		if ( this.fireCounter === this.fireDelay ) {
@@ -153,29 +175,36 @@ function BadGuys(viewportSize) {
 	this.content = [] ;
 	this.populate(10) ;
 	// Init
-	this.change() ; 
+	this.choices = [
+		() => { this.speedX =  1 ; this.speedY =  0 ;},
+		() => { this.speedX =  0 ; this.speedY =  1 ;},
+		() => { this.speedX = -1 ; this.speedY =  0 ;},
+		() => { this.speedX =  0 ; this.speedY = -1 ;},
+	] ;
+	this.change() ;
 }
 BadGuys.prototype.change = function changeBadGuys() {
-	this.speedX = Math.floor(Math.random()*3)-1 ;
-	this.speedY = Math.floor(Math.random()*3)-1 ;
-	this.nextChange = Math.floor(Math.random()*1000)+1 ;
+	this.nextChange = Math.floor(Math.random()*500)+500 ;
+	let i = Math.floor(Math.random()*3) ;
+	let nextChoice = this.choices.splice(i, 1)[0] ;
+	nextChoice() ;
+	this.choices.push(nextChoice) ;
 }
 BadGuys.prototype.update = function updateBadGuys() {
 	this.content.forEach((badGuy) => { badGuy.update(this.speedX, this.speedY) }) ;
 	// Trigger change if a badGuy goes near a border
 	const leftBG = this.content[0] ;
 	const rightBG = this.content[this.content.length - 1] ;
-	const margin = 5 ;
-	if (
-		( leftBG.left < margin )
-		||
-		( leftBG.top < margin )
-		||
-		( rightBG.right > this.viewportSize - margin )
-		||
-		( rightBG.bottom > this.viewportSize - margin - 100 )
-	) {
-		return this.change() ;
+	const margin = 20 ;
+	if ( this.speedX !== 0 ) {
+		if ( ( leftBG.left + this.speedX <= margin ) || ( rightBG.right + this.speedX >= this.viewportSize - margin ) ) {
+			this.speedX = - this.speedX ;
+		}
+	}
+	if ( this.speedY !== 0 ) {
+		if ( ( leftBG.top + this.speedY <= margin ) || ( rightBG.bottom + this.speedY >= this.viewportSize - margin - 100 ) ) {
+			this.speedY = - this.speedY ;
+		}
 	}
 	// Trigger change after delay
 	this.nextChange-- ;
@@ -185,7 +214,7 @@ BadGuys.prototype.update = function updateBadGuys() {
 }
 BadGuys.prototype.populate = function populateBadGuys(nb) {
 	for ( let i = 0 ; i < nb ; i++ ) {
-		this.content.push(new BadGuy(20*(i+1)*2,20)) ;
+		this.content.push(new BadGuy(20*(i+1)*2,30)) ;
 	}
 }
 BadGuys.prototype.collision = function collisionBadGuys(bullet) {
